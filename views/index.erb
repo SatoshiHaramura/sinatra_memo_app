@@ -1,0 +1,14 @@
+<article>
+  <div class="button">
+    <form action="/memos/new" method="get">
+      <button type="submit">追加</button>
+    </form>
+  </div>
+  <% if @memos %>
+    <% @memos.each do |memo| %>
+      <ul>
+        <li><a href="/memos/<%= memo['id'] %>"><%= h(memo['title']) %></a></li>
+      </ul>
+    <% end %>
+  <% end %>
+</article>

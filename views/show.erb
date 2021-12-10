@@ -1,0 +1,27 @@
+<article>
+  <div class="title">
+    <div class="title_label">
+      <p>タイトル</p>
+    </div>
+    <div class="title_text">
+      <p><%= h(@memo['title']) %></p>
+    </div>
+  </div>
+  <div class="content">
+    <div class="content_label">
+      <p>内容</p>
+    </div>
+    <div class="content_text">
+      <p><%= h(@memo['content']) %></p>
+    </div>
+  </div>
+  <div class="button">
+    <form action="/memos/<%= @memo['id'] %>/edit" method="get">
+      <button type="submit">編集</button>
+    </form>
+    <form action="/memos/<%= @memo['id'] %>" method="post">
+      <input type="hidden" name="_method" value="delete">
+      <button type="submit">削除</button>
+    </form>
+  </div>
+</article>
