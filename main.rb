@@ -6,7 +6,7 @@ require 'sinatra/reloader'
 require 'sinatra/json'
 require 'erb'
 
-class Memo
+class MemoManager
   DATA_FILE_PATH = './db/memo_data.json'
 
   attr_reader :memos
@@ -17,7 +17,7 @@ class Memo
 
   def self.read
     memos = File.open(DATA_FILE_PATH) { |f| JSON.parse(f.read) }
-    Memo.new(memos['memos'])
+    MemoManager.new(memos['memos'])
   end
 
   def write
@@ -30,28 +30,25 @@ class Memo
   end
 
   def create(title, content)
-    id = if @memos != []
-           @memos.last['id'].to_i + 1
-         else
-           1
-         end
+    id = @memos.empty? ? 1 : @memos.last['id'].to_i + 1
     add_data = { 'id': id.to_s, 'title': title, 'content': content }
     @memos << add_data
+    write
   end
 
   def update(id, title, content)
-    @memos.each_with_index do |memo, i|
+    @memos.each do |memo|
       if memo['id'] == id
-        @memos[i]['title'] = title
-        @memos[i]['content'] = content
+        memo['title'] = title
+        memo['content'] = content
       end
     end
+    write
   end
 
   def destroy(id)
-    @memos.each_with_index do |memo, i|
-      @memos.delete_at i if memo['id'] == id
-    end
+    @memos.delete_if { |memo| memo['id'] == id }
+    write
   end
 end
 
@@ -69,7 +66,8 @@ end
 
 # GET / => トップページ
 get '/' do
-  @memo_list = Memo.read
+  memo_manager = MemoManager.read
+  @memos = memo_manager.memos
   erb :index
 end
 
@@ -80,38 +78,35 @@ end
 
 # POST /memos => 新規作成する
 post '/memos' do
-  memo = Memo.read
-  memo.create(h(params[:title]), h(params[:content]))
-  memo.write
+  memo_manager = MemoManager.read
+  memo_manager.create(params[:title], params[:content])
   redirect to('/')
 end
 
 # GET /memos/1 => 詳細ページ
 get '/memos/:id' do
-  memo = Memo.read
-  @memo = memo.find(params[:id])
+  memo_manager = MemoManager.read
+  @memo = memo_manager.find(params[:id])
   erb :show
 end
 
-# GET /memos => 編集ページ
+# GET /memos/1/edit => 編集ページ
 get '/memos/:id/edit' do
-  memo = Memo.read
-  @memo = memo.find(params[:id])
+  memo_manager = MemoManager.read
+  @memo = memo_manager.find(params[:id])
   erb :edit
 end
 
-# PATCH /memos => 更新する
+# PATCH /memos/1 => 更新する
 patch '/memos/:id' do
-  memo = Memo.read
-  memo.update(params[:id], h(params[:title]), h(params[:content]))
-  memo.write
+  memo_manager = MemoManager.read
+  memo_manager.update(params[:id], params[:title], params[:content])
   redirect to('/')
 end
 
-# DELTE /memos/:id => 削除する
+# DELETE /memos/1 => 削除する
 delete '/memos/:id' do
-  memo = Memo.read
-  memo.destroy(params[:id])
-  memo.write
+  memo_manager = MemoManager.read
+  memo_manager.destroy(params[:id])
   redirect to('/')
 end

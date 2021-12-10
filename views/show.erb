@@ -4,7 +4,7 @@
       <p>タイトル</p>
     </div>
     <div class="title_text">
-      <p><%= @memo['title'] %></p>
+      <p><%= h(@memo['title']) %></p>
     </div>
   </div>
   <div class="content">
@@ -12,7 +12,7 @@
       <p>内容</p>
     </div>
     <div class="content_text">
-      <p><%= @memo['content'] %></p>
+      <p><%= h(@memo['content']) %></p>
     </div>
   </div>
   <div class="button">

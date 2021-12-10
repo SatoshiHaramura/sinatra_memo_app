@@ -4,10 +4,10 @@
       <button type="submit">追加</button>
     </form>
   </div>
-  <% if @memo_list.memos %>
-    <% @memo_list.memos.each do |memo| %>
+  <% if @memos %>
+    <% @memos.each do |memo| %>
       <ul>
-        <li><a href="/memos/<%= memo['id'] %>"><%= memo['title'] %></a></li>
+        <li><a href="/memos/<%= memo['id'] %>"><%= h(memo['title']) %></a></li>
       </ul>
     <% end %>
   <% end %>
