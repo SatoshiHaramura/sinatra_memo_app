@@ -20,11 +20,6 @@ class MemoManager
     MemoManager.new(memos['memos'])
   end
 
-  def write
-    memos = { "memos": @memos }
-    File.open(DATA_FILE_PATH, 'w') { |f| JSON.dump(memos, f) }
-  end
-
   def find(id)
     @memos.find { |memo| memo['id'] == id }
   end
@@ -49,6 +44,13 @@ class MemoManager
   def destroy(id)
     @memos.delete_if { |memo| memo['id'] == id }
     write
+  end
+
+  private
+
+  def write
+    memos = { "memos": @memos }
+    File.open(DATA_FILE_PATH, 'w') { |f| JSON.dump(memos, f) }
   end
 end
 
