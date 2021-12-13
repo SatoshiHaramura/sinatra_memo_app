@@ -3,54 +3,56 @@
 
 require 'sinatra'
 require 'sinatra/reloader'
-require 'sinatra/json'
 require 'erb'
+require 'pg'
 
 class MemoManager
-  DATA_FILE_PATH = './db/memo_data.json'
+  DB_NAME = 'memodb'
+  TABLE_NAME = 'memos'
 
-  attr_reader :memos
-
-  def initialize(memos)
-    @memos = memos
+  def initialize(connection)
+    @connection = connection
   end
 
-  def self.read
-    memos = File.open(DATA_FILE_PATH) { |f| JSON.parse(f.read) }
-    MemoManager.new(memos['memos'])
+  def self.connect
+    connection = PG.connect(dbname: DB_NAME)
+    MemoManager.new(connection)
+  end
+
+  def disconnect
+    @connection.finish
+  end
+
+  def all
+    @connection.exec("SELECT * FROM #{TABLE_NAME} ORDER BY id")
   end
 
   def find(id)
-    @memos.find { |memo| memo['id'] == id }
+    stmt_name = 'select'
+    sql = "SELECT * FROM #{TABLE_NAME} WHERE id = $1"
+    @connection.prepare(stmt_name, sql)
+    @connection.exec_prepared(stmt_name, [id]).first
   end
 
   def create(title, content)
-    id = @memos.empty? ? 1 : @memos.last['id'].to_i + 1
-    add_data = { 'id': id.to_s, 'title': title, 'content': content }
-    @memos << add_data
-    write
+    stmt_name = 'create'
+    sql = "INSERT INTO #{TABLE_NAME} (title, content) values ($1, $2)"
+    @connection.prepare(stmt_name, sql)
+    @connection.exec_prepared(stmt_name, [title, content])
   end
 
   def update(id, title, content)
-    @memos.each do |memo|
-      if memo['id'] == id
-        memo['title'] = title
-        memo['content'] = content
-      end
-    end
-    write
+    stmt_name = 'update'
+    sql = "UPDATE #{TABLE_NAME} SET title = $1, content = $2 WHERE id = $3"
+    @connection.prepare(stmt_name, sql)
+    @connection.exec_prepared(stmt_name, [title, content, id])
   end
 
   def destroy(id)
-    @memos.delete_if { |memo| memo['id'] == id }
-    write
-  end
-
-  private
-
-  def write
-    memos = { "memos": @memos }
-    File.open(DATA_FILE_PATH, 'w') { |f| JSON.dump(memos, f) }
+    stmt_name = 'delete'
+    sql = "DELETE FROM #{TABLE_NAME} WHERE id = $1"
+    @connection.prepare(stmt_name, sql)
+    @connection.exec_prepared(stmt_name, [id])
   end
 end
 
@@ -68,8 +70,9 @@ end
 
 # GET / => トップページ
 get '/' do
-  memo_manager = MemoManager.read
-  @memos = memo_manager.memos
+  memo_manager = MemoManager.connect
+  @memos = memo_manager.all
+  memo_manager.disconnect
   erb :index
 end
 
@@ -80,35 +83,40 @@ end
 
 # POST /memos => 新規作成する
 post '/memos' do
-  memo_manager = MemoManager.read
+  memo_manager = MemoManager.connect
   memo_manager.create(params[:title], params[:content])
+  memo_manager.disconnect
   redirect to('/')
 end
 
 # GET /memos/1 => 詳細ページ
 get '/memos/:id' do
-  memo_manager = MemoManager.read
+  memo_manager = MemoManager.connect
   @memo = memo_manager.find(params[:id])
+  memo_manager.disconnect
   erb :show
 end
 
 # GET /memos/1/edit => 編集ページ
 get '/memos/:id/edit' do
-  memo_manager = MemoManager.read
+  memo_manager = MemoManager.connect
   @memo = memo_manager.find(params[:id])
+  memo_manager.disconnect
   erb :edit
 end
 
 # PATCH /memos/1 => 更新する
 patch '/memos/:id' do
-  memo_manager = MemoManager.read
+  memo_manager = MemoManager.connect
   memo_manager.update(params[:id], params[:title], params[:content])
+  memo_manager.disconnect
   redirect to('/')
 end
 
 # DELETE /memos/1 => 削除する
 delete '/memos/:id' do
-  memo_manager = MemoManager.read
+  memo_manager = MemoManager.connect
   memo_manager.destroy(params[:id])
+  memo_manager.disconnect
   redirect to('/')
 end
