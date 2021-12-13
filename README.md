@@ -12,13 +12,20 @@ Sinatraを使ったメモアプリのリポジトリです。
 $ git clone https://github.com/自分のアカウント名/sinatra_memo_app.git
 ```
 
-4. main.rbをrubyコマンドで実行し、メモアプリを起動させます。
+4. PostgreSQLを起動させます。
+
+```
+# macOSにてHomebrewでPostgreSQLを管理している場合
+$ brew services start postgresql
+```
+
+5. main.rbをrubyコマンドで実行し、メモアプリを起動させます。
 
 ```
 $ bundle exec ruby main.rb
 ```
 
-5. ブラウザからアクセスします。
+6. ブラウザからアクセスします。
 
 ```
 http://localhost:4567

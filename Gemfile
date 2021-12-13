@@ -4,10 +4,10 @@ source 'https://rubygems.org'
 
 git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 
+gem 'pg'
 gem 'sinatra'
 gem 'sinatra-contrib', '~> 2.1'
 gem 'webrick'
-gem 'pg'
 
 # For plain Ruby scripts
 group :development do
