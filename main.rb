@@ -9,50 +9,51 @@ require 'pg'
 class MemoManager
   DB_NAME = 'memodb'
   TABLE_NAME = 'memos'
-
-  def initialize(connection)
-    @connection = connection
-  end
+  CONNECTION = PG.connect(dbname: DB_NAME)
 
   def self.connect
-    connection = PG.connect(dbname: DB_NAME)
-    MemoManager.new(connection)
-  end
-
-  def disconnect
-    @connection.finish
+    MemoManager.new
   end
 
   def all
-    @connection.exec("SELECT * FROM #{TABLE_NAME} ORDER BY id")
+    p CONNECTION
+    stmt_name = 'all'
+    sql = "SELECT * FROM #{TABLE_NAME} ORDER BY id"
+    CONNECTION.exec('DEALLOCATE ALL')
+    CONNECTION.prepare(stmt_name, sql)
+    CONNECTION.exec_prepared(stmt_name)
   end
 
   def find(id)
     stmt_name = 'select'
     sql = "SELECT * FROM #{TABLE_NAME} WHERE id = $1"
-    @connection.prepare(stmt_name, sql)
-    @connection.exec_prepared(stmt_name, [id]).first
+    CONNECTION.exec('DEALLOCATE ALL')
+    CONNECTION.prepare(stmt_name, sql)
+    CONNECTION.exec_prepared(stmt_name, [id]).first
   end
 
   def create(title, content)
     stmt_name = 'create'
     sql = "INSERT INTO #{TABLE_NAME} (title, content) values ($1, $2)"
-    @connection.prepare(stmt_name, sql)
-    @connection.exec_prepared(stmt_name, [title, content])
+    CONNECTION.exec('DEALLOCATE ALL')
+    CONNECTION.prepare(stmt_name, sql)
+    CONNECTION.exec_prepared(stmt_name, [title, content])
   end
 
   def update(id, title, content)
     stmt_name = 'update'
     sql = "UPDATE #{TABLE_NAME} SET title = $1, content = $2 WHERE id = $3"
-    @connection.prepare(stmt_name, sql)
-    @connection.exec_prepared(stmt_name, [title, content, id])
+    CONNECTION.exec('DEALLOCATE ALL')
+    CONNECTION.prepare(stmt_name, sql)
+    CONNECTION.exec_prepared(stmt_name, [title, content, id])
   end
 
   def destroy(id)
     stmt_name = 'delete'
     sql = "DELETE FROM #{TABLE_NAME} WHERE id = $1"
-    @connection.prepare(stmt_name, sql)
-    @connection.exec_prepared(stmt_name, [id])
+    CONNECTION.exec('DEALLOCATE ALL')
+    CONNECTION.prepare(stmt_name, sql)
+    CONNECTION.exec_prepared(stmt_name, [id])
   end
 end
 
@@ -72,7 +73,6 @@ end
 get '/' do
   memo_manager = MemoManager.connect
   @memos = memo_manager.all
-  memo_manager.disconnect
   erb :index
 end
 
@@ -85,7 +85,6 @@ end
 post '/memos' do
   memo_manager = MemoManager.connect
   memo_manager.create(params[:title], params[:content])
-  memo_manager.disconnect
   redirect to('/')
 end
 
@@ -93,7 +92,6 @@ end
 get '/memos/:id' do
   memo_manager = MemoManager.connect
   @memo = memo_manager.find(params[:id])
-  memo_manager.disconnect
   erb :show
 end
 
@@ -101,7 +99,6 @@ end
 get '/memos/:id/edit' do
   memo_manager = MemoManager.connect
   @memo = memo_manager.find(params[:id])
-  memo_manager.disconnect
   erb :edit
 end
 
@@ -109,7 +106,6 @@ end
 patch '/memos/:id' do
   memo_manager = MemoManager.connect
   memo_manager.update(params[:id], params[:title], params[:content])
-  memo_manager.disconnect
   redirect to('/')
 end
 
@@ -117,6 +113,5 @@ end
 delete '/memos/:id' do
   memo_manager = MemoManager.connect
   memo_manager.destroy(params[:id])
-  memo_manager.disconnect
   redirect to('/')
 end
