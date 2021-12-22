@@ -16,7 +16,6 @@ class MemoManager
   end
 
   def all
-    p CONNECTION
     stmt_name = 'all'
     sql = "SELECT * FROM #{TABLE_NAME} ORDER BY id"
     CONNECTION.exec('DEALLOCATE ALL')
