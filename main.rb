@@ -10,49 +10,34 @@ class MemoManager
   DB_NAME = 'memodb'
   TABLE_NAME = 'memos'
   CONNECTION = PG.connect(dbname: DB_NAME)
+  CONNECTION.prepare('all', "SELECT * FROM #{TABLE_NAME} ORDER BY id")
+  CONNECTION.prepare('select', "SELECT * FROM #{TABLE_NAME} WHERE id = $1")
+  CONNECTION.prepare('create', "INSERT INTO #{TABLE_NAME} (title, content) values ($1, $2)")
+  CONNECTION.prepare('update', "UPDATE #{TABLE_NAME} SET title = $1, content = $2 WHERE id = $3")
+  CONNECTION.prepare('delete', "DELETE FROM #{TABLE_NAME} WHERE id = $1")
 
   def self.connect
     MemoManager.new
   end
 
   def all
-    stmt_name = 'all'
-    sql = "SELECT * FROM #{TABLE_NAME} ORDER BY id"
-    CONNECTION.exec('DEALLOCATE ALL')
-    CONNECTION.prepare(stmt_name, sql)
-    CONNECTION.exec_prepared(stmt_name)
+    CONNECTION.exec_prepared('all')
   end
 
   def find(id)
-    stmt_name = 'select'
-    sql = "SELECT * FROM #{TABLE_NAME} WHERE id = $1"
-    CONNECTION.exec('DEALLOCATE ALL')
-    CONNECTION.prepare(stmt_name, sql)
-    CONNECTION.exec_prepared(stmt_name, [id]).first
+    CONNECTION.exec_prepared('select', [id]).first
   end
 
   def create(title, content)
-    stmt_name = 'create'
-    sql = "INSERT INTO #{TABLE_NAME} (title, content) values ($1, $2)"
-    CONNECTION.exec('DEALLOCATE ALL')
-    CONNECTION.prepare(stmt_name, sql)
-    CONNECTION.exec_prepared(stmt_name, [title, content])
+    CONNECTION.exec_prepared('create', [title, content])
   end
 
   def update(id, title, content)
-    stmt_name = 'update'
-    sql = "UPDATE #{TABLE_NAME} SET title = $1, content = $2 WHERE id = $3"
-    CONNECTION.exec('DEALLOCATE ALL')
-    CONNECTION.prepare(stmt_name, sql)
-    CONNECTION.exec_prepared(stmt_name, [title, content, id])
+    CONNECTION.exec_prepared('update', [title, content, id])
   end
 
   def destroy(id)
-    stmt_name = 'delete'
-    sql = "DELETE FROM #{TABLE_NAME} WHERE id = $1"
-    CONNECTION.exec('DEALLOCATE ALL')
-    CONNECTION.prepare(stmt_name, sql)
-    CONNECTION.exec_prepared(stmt_name, [id])
+    CONNECTION.exec_prepared('delete', [id])
   end
 end
 
